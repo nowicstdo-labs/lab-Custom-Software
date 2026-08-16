@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: astha_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: astha_user
+      POSTGRES_PASSWORD: astha_secure_pass
+      POSTGRES_DB: astha_diagnostic_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - astha_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U astha_user -d astha_diagnostic_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: astha_api
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://astha_user:astha_secure_pass@postgres:5432/astha_diagnostic_db?schema=public"
+      PORT: 3000
+      NODE_ENV: production
+      JWT_ACCESS_SECRET: "astha_access_secret_change_in_production_key_12345"
+      JWT_REFRESH_SECRET: "astha_refresh_secret_change_in_production_key_67890"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  astha_pgdata:

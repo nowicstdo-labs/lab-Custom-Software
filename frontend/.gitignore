@@ -1,0 +1,19 @@
+# Environment & Secret Files
+.env
+.env.*
+!.env.example
+
+# Flutter / Dart Generated Output
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+
+# IDEs
+*.iml
+.idea/
+.vscode/

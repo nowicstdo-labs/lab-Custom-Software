@@ -1,0 +1,37 @@
+# Render Blueprint Spec for Astha Diagnostic Application
+# Deploy automatically by linking your GitHub Repository on https://dashboard.render.com
+
+services:
+  # ── LIVE NESTJS BACKEND REST API ──────────────────────────────────────────
+  - type: web
+    name: astha-diagnostic-backend
+    runtime: node
+    region: singapore
+    plan: starter
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: astha-postgres-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION
+        value: 7d
+      - key: CORS_ORIGIN
+        value: "*"
+
+# ── POSTGRESQL DATABASE ──────────────────────────────────────────────────────
+databases:
+  - name: astha-postgres-db
+    databaseName: astha_db
+    user: astha_admin
+    region: singapore
+    plan: starter
