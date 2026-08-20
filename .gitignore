@@ -18,6 +18,8 @@ dist/
 backend/dist/
 build/
 frontend/build/
+flutter/
+frontend/flutter/
 .dart_tool/
 frontend/.dart_tool/
 .flutter-plugins
