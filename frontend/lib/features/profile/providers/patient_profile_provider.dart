@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../services/api_service.dart';
 
 class PatientProfileData {
   final String fullName;
@@ -43,8 +44,31 @@ class PatientProfileData {
     required this.allergies,
   });
 
+  const PatientProfileData.empty()
+      : fullName = '',
+        patientId = '',
+        isVerified = false,
+        dob = '',
+        gender = '',
+        bloodGroup = '',
+        phone = '',
+        email = '',
+        alternateNumber = '',
+        address = '',
+        emergencyName = '',
+        emergencyRelationship = '',
+        emergencyPhone = '',
+        height = '',
+        weight = '',
+        bmi = '',
+        bmiStatus = '',
+        lastCheckup = '',
+        allergies = '';
+
   PatientProfileData copyWith({
     String? fullName,
+    String? patientId,
+    bool? isVerified,
     String? dob,
     String? gender,
     String? bloodGroup,
@@ -55,11 +79,17 @@ class PatientProfileData {
     String? emergencyName,
     String? emergencyRelationship,
     String? emergencyPhone,
+    String? height,
+    String? weight,
+    String? bmi,
+    String? bmiStatus,
+    String? lastCheckup,
+    String? allergies,
   }) {
     return PatientProfileData(
       fullName: fullName ?? this.fullName,
-      patientId: patientId,
-      isVerified: isVerified,
+      patientId: patientId ?? this.patientId,
+      isVerified: isVerified ?? this.isVerified,
       dob: dob ?? this.dob,
       gender: gender ?? this.gender,
       bloodGroup: bloodGroup ?? this.bloodGroup,
@@ -70,12 +100,12 @@ class PatientProfileData {
       emergencyName: emergencyName ?? this.emergencyName,
       emergencyRelationship: emergencyRelationship ?? this.emergencyRelationship,
       emergencyPhone: emergencyPhone ?? this.emergencyPhone,
-      height: height,
-      weight: weight,
-      bmi: bmi,
-      bmiStatus: bmiStatus,
-      lastCheckup: lastCheckup,
-      allergies: allergies,
+      height: height ?? this.height,
+      weight: weight ?? this.weight,
+      bmi: bmi ?? this.bmi,
+      bmiStatus: bmiStatus ?? this.bmiStatus,
+      lastCheckup: lastCheckup ?? this.lastCheckup,
+      allergies: allergies ?? this.allergies,
     );
   }
 }
@@ -86,32 +116,72 @@ final patientProfileProvider =
 });
 
 class PatientProfileNotifier extends StateNotifier<PatientProfileData> {
-  PatientProfileNotifier()
-      : super(
-          const PatientProfileData(
-            fullName: 'Rahul Kumar',
-            patientId: 'ASTH-P-000125',
-            isVerified: true,
-            dob: '12-05-1997',
-            gender: 'Male',
-            bloodGroup: 'O+',
-            phone: '+91 98765 43210',
-            email: 'rahulkumar@gmail.com',
-            alternateNumber: '+91 91234 56789',
-            address: '123, Green Park, Roorkee, Haridwar Road, Uttarakhand - 247667',
-            emergencyName: 'Suresh Kumar',
-            emergencyRelationship: 'Father',
-            emergencyPhone: '+91 98765 00000',
-            height: '175 cm',
-            weight: '68 kg',
-            bmi: '22.2',
-            bmiStatus: 'Normal',
-            lastCheckup: '25 May 2025',
-            allergies: 'None',
-          ),
-        );
+  PatientProfileNotifier() : super(const PatientProfileData.empty());
 
   void updateProfile(PatientProfileData updated) {
     state = updated;
   }
+
+  void setProfileFromUser({required String name, required String email, String? phone}) {
+    state = state.copyWith(
+      fullName: name,
+      email: email,
+      phone: phone ?? state.phone,
+      isVerified: true,
+    );
+  }
+
+  void clearProfile() {
+    state = const PatientProfileData.empty();
+  }
+
+  Future<void> fetchPatientProfile({bool forceRefresh = false}) async {
+    if (!forceRefresh && state.fullName.isNotEmpty && state.patientId.isNotEmpty) {
+      return;
+    }
+    try {
+
+      final res = await ApiService.get('/patients/me');
+      if (res['success'] == true && res['data'] != null) {
+        final data = res['data'] as Map<String, dynamic>;
+        final user = data['user'] as Map<String, dynamic>? ?? {};
+
+        final name = user['name'] as String? ?? state.fullName;
+        final email = user['email'] as String? ?? state.email;
+        final phone = user['phone'] as String? ?? data['phone'] as String? ?? state.phone;
+        final patientId = data['patientId'] as String? ?? state.patientId;
+        final dob = data['dob'] as String? ?? state.dob;
+        final gender = data['gender'] as String? ?? state.gender;
+        final bloodGroup = data['bloodGroup'] as String? ?? state.bloodGroup;
+        final address = data['address'] as String? ?? state.address;
+        final alternateNumber = data['alternateNumber'] as String? ?? state.alternateNumber;
+        final emergencyName = data['emergencyName'] as String? ?? state.emergencyName;
+        final emergencyRelationship = data['emergencyRelationship'] as String? ?? state.emergencyRelationship;
+        final emergencyPhone = data['emergencyPhone'] as String? ?? state.emergencyPhone;
+
+        state = PatientProfileData(
+          fullName: name,
+          patientId: patientId.isNotEmpty ? patientId : 'ASTH-P-LIVE',
+          isVerified: true,
+          dob: dob,
+          gender: gender,
+          bloodGroup: bloodGroup,
+          phone: phone,
+          email: email,
+          alternateNumber: alternateNumber,
+          address: address,
+          emergencyName: emergencyName,
+          emergencyRelationship: emergencyRelationship,
+          emergencyPhone: emergencyPhone,
+          height: state.height,
+          weight: state.weight,
+          bmi: state.bmi,
+          bmiStatus: state.bmiStatus,
+          lastCheckup: state.lastCheckup,
+          allergies: state.allergies,
+        );
+      }
+    } catch (_) {}
+  }
 }
+

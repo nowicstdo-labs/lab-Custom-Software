@@ -59,7 +59,29 @@ class AppUser {
     this.mobile,
     required this.role,
   });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'email': email,
+        'mobile': mobile,
+        'role': role.name,
+      };
+
+  factory AppUser.fromJson(Map<String, dynamic> json) {
+    return AppUser(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      mobile: json['mobile'] as String?,
+      role: UserRole.values.firstWhere(
+        (r) => r.name == json['role'],
+        orElse: () => UserRole.patient,
+      ),
+    );
+  }
 }
+
 
 class AuthSession {
   final String id;

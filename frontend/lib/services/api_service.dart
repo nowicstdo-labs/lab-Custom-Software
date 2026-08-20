@@ -3,12 +3,14 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../core/config/app_config.dart';
+import 'secure_storage_service.dart';
 
 /// Centralized REST API Service for Astha Diagnostic NestJS Backend.
 class ApiService {
-  static String baseUrl = AppConfig.apiBaseUrl;
+  static String get baseUrl => AppConfig.apiBaseUrl;
   static String? accessToken;
   static String? refreshToken;
+  static bool _isRefreshing = false;
 
   static void setAuthToken(String token) {
     accessToken = token;
@@ -16,7 +18,7 @@ class ApiService {
 
   static Map<String, String> get _headers => {
         'Content-Type': 'application/json',
-        if (accessToken != null) 'Authorization': 'Bearer $accessToken',
+        if (accessToken != null && accessToken!.isNotEmpty) 'Authorization': 'Bearer $accessToken',
       };
 
   /// Generic POST HTTP Request
@@ -28,7 +30,7 @@ class ApiService {
             headers: _headers,
             body: jsonEncode(body),
           )
-          .timeout(const Duration(seconds: 12));
+          .timeout(const Duration(seconds: 15));
 
       return _handleResponse(response, () => post(endpoint, body));
     } catch (e) {
@@ -44,7 +46,7 @@ class ApiService {
             Uri.parse('$baseUrl$endpoint'),
             headers: _headers,
           )
-          .timeout(const Duration(seconds: 12));
+          .timeout(const Duration(seconds: 15));
 
       return _handleResponse(response, () => get(endpoint));
     } catch (e) {
@@ -61,9 +63,42 @@ class ApiService {
             headers: _headers,
             body: jsonEncode(body),
           )
-          .timeout(const Duration(seconds: 12));
+          .timeout(const Duration(seconds: 15));
 
       return _handleResponse(response, () => patch(endpoint, body));
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  /// Generic PUT HTTP Request
+  static Future<Map<String, dynamic>> put(String endpoint, Map<String, dynamic> body) async {
+    try {
+      final response = await http
+          .put(
+            Uri.parse('$baseUrl$endpoint'),
+            headers: _headers,
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      return _handleResponse(response, () => put(endpoint, body));
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  /// Generic DELETE HTTP Request
+  static Future<Map<String, dynamic>> delete(String endpoint) async {
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('$baseUrl$endpoint'),
+            headers: _headers,
+          )
+          .timeout(const Duration(seconds: 15));
+
+      return _handleResponse(response, () => delete(endpoint));
     } catch (e) {
       return {'success': false, 'message': 'Network error: $e'};
     }
@@ -77,8 +112,10 @@ class ApiService {
     try {
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
 
-      if (response.statusCode == 401 && refreshToken != null) {
+      if (response.statusCode == 401 && refreshToken != null && !_isRefreshing) {
+        _isRefreshing = true;
         final refreshed = await refreshAccessToken();
+        _isRefreshing = false;
         if (refreshed) {
           return await retryCall();
         }
@@ -99,24 +136,36 @@ class ApiService {
 
   /// Refresh JWT Access Token Pair
   static Future<bool> refreshAccessToken() async {
-    if (refreshToken == null) return false;
+    if (refreshToken == null || refreshToken!.isEmpty) return false;
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/refresh'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'refreshToken': refreshToken}),
-      );
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final decoded = jsonDecode(response.body);
-        accessToken = decoded['data']?['accessToken'] ?? decoded['accessToken'];
-        refreshToken = decoded['data']?['refreshToken'] ?? decoded['refreshToken'];
-        return true;
+        final data = decoded['data'] ?? decoded;
+        final newAccess = data['accessToken'] as String?;
+        final newRefresh = data['refreshToken'] as String?;
+
+        if (newAccess != null && newAccess.isNotEmpty) {
+          accessToken = newAccess;
+          await SecureStorageService.instance.saveAccessToken(newAccess);
+          if (newRefresh != null && newRefresh.isNotEmpty) {
+            refreshToken = newRefresh;
+            await SecureStorageService.instance.saveRefreshToken(newRefresh);
+          }
+          return true;
+        }
       }
     } catch (_) {}
 
     accessToken = null;
     refreshToken = null;
+    await SecureStorageService.instance.clearAll();
     return false;
   }
 }
+

@@ -17,8 +17,8 @@ class _PatientDashboardScreenState extends ConsumerState<PatientDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(authProvider).user;
-    final patientName = user != null ? user.name.split(' ').first : 'Rahul';
+    final user = ref.watch(authProvider.select((s) => s.user));
+    final patientName = (user != null && user.name.isNotEmpty) ? user.name.split(' ').first : 'User';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),

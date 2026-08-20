@@ -101,44 +101,32 @@ class ThreeDIllustration extends StatelessWidget {
       width: size,
       height: size,
       alignment: Alignment.center,
-      child: Image.asset(
-        type.assetPath,
-        width: size,
-        height: size,
-        fit: fit,
-        errorBuilder: (context, error, stackTrace) {
-          // Render rich custom 3D styled gradient sphere graphic as fallback
-          return Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                center: const Alignment(-0.3, -0.4),
-                radius: 0.8,
-                colors: [
-                  Colors.white.withValues(alpha: 0.9),
-                  type.primaryColor.withValues(alpha: 0.25),
-                  type.primaryColor,
-                ],
-                stops: const [0.0, 0.5, 1.0],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: type.primaryColor.withValues(alpha: 0.35),
-                  blurRadius: size * 0.2,
-                  offset: Offset(0, size * 0.1),
-                ),
-              ],
-            ),
-            child: Icon(
-              type.fallbackIcon,
-              size: size * 0.48,
-              color: Colors.white,
-            ),
-          );
-        },
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          center: const Alignment(-0.3, -0.4),
+          radius: 0.8,
+          colors: [
+            Colors.white.withValues(alpha: 0.9),
+            type.primaryColor.withValues(alpha: 0.25),
+            type.primaryColor,
+          ],
+          stops: const [0.0, 0.5, 1.0],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: type.primaryColor.withValues(alpha: 0.35),
+            blurRadius: size * 0.2,
+            offset: Offset(0, size * 0.1),
+          ),
+        ],
+      ),
+      child: Icon(
+        type.fallbackIcon,
+        size: size * 0.48,
+        color: Colors.white,
       ),
     );
   }
+
 }

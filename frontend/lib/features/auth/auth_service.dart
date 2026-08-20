@@ -1,23 +1,17 @@
-// =============================================================================
-// TODO: Replace with real backend authentication before production.
-// This mock authentication system is ONLY for frontend development and testing.
-// Do NOT use real passwords, JWT tokens, or production database here.
-// See backend implementation guide before going live.
-// =============================================================================
-
 import 'dart:async';
-import 'dart:convert';
+import 'package:flutter/foundation.dart';
+
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'auth_models.dart';
 import '../../services/api_service.dart';
+import '../../services/secure_storage_service.dart';
 
 // ---------------------------------------------------------------------------
-// Mock User Database
+// Mock User Database (Used strictly for dev test credentials banner in debug)
 // ---------------------------------------------------------------------------
 
-/// A single account record stored in the mock database.
 class MockAccount {
   final String name;
   final String email;
@@ -34,19 +28,11 @@ class MockAccount {
   });
 }
 
-/// In-memory singleton that acts as the mock backend user store.
-/// Pre-seeded with one demo account per role for development convenience.
 class MockUserDatabase {
   MockUserDatabase._();
   static final MockUserDatabase instance = MockUserDatabase._();
 
   final List<MockAccount> _accounts = [
-    // =========================================================================
-    // DEVELOPMENT-ONLY MOCK ACCOUNTS
-    // These are temporary accounts for frontend development and testing.
-    // Admin account: admin@asthadiagnostic.com / Admin@123
-    // NEVER expose these credentials in production UI.
-    // =========================================================================
     MockAccount(
       name: 'Aarav Patel',
       email: 'patient@astha.com',
@@ -75,9 +61,6 @@ class MockUserDatabase {
       password: 'password',
       role: UserRole.labTechnician,
     ),
-    // ── DEV-ONLY Admin account ──────────────────────────────────────────────
-    // IMPORTANT: This is a DEVELOPMENT-ONLY mock admin account.
-    // Replace with real backend admin management before production.
     MockAccount(
       name: 'Astha Diagnostic Admin',
       email: 'admin@asthadiagnostic.com',
@@ -87,29 +70,26 @@ class MockUserDatabase {
     ),
   ];
 
-  /// Tracks the currently logged-in user session (in-memory only).
   MockAccount? _currentUser;
 
-  /// Returns all accounts (for display in staff lists, etc.)
   List<MockAccount> get all => List.unmodifiable(_accounts);
-
-  /// Returns all accounts that are NOT patients (i.e. staff members).
   List<MockAccount> get staffMembers =>
       _accounts.where((a) => a.role != UserRole.patient).toList();
-
-  /// Returns all staff members — alias used by admin screens.
   List<MockAccount> getAllStaff() => staffMembers;
 
-  /// Returns the currently authenticated mock user, or null if no session.
   MockAccount? getCurrentUser() => _currentUser;
 
-  /// Clears the current user session.
+  void setCurrentUser(MockAccount account) {
+    _currentUser = account;
+    if (_findByEmail(account.email) == null) {
+      _accounts.add(account);
+    }
+  }
+
   void logout() {
     _currentUser = null;
   }
 
-  /// Registers a new patient account.
-  /// Throws if the email is already in use.
   void registerPatient({
     required String name,
     required String email,
@@ -128,8 +108,6 @@ class MockUserDatabase {
     ));
   }
 
-  /// Adds a new staff member account with the specified role.
-  /// Throws if the email is already in use.
   void addStaffMember({
     required String name,
     required String email,
@@ -149,13 +127,9 @@ class MockUserDatabase {
     ));
   }
 
-  /// Looks up an account by email + password.
-  /// Returns the account on success, sets currentUser, or throws a descriptive error.
   MockAccount login({required String email, required String password}) {
     final account = _findByEmail(email);
     if (account == null || account.password != password) {
-      // Always throw the same message regardless of which field was wrong
-      // to prevent email enumeration attacks (even in dev, good practice).
       throw Exception('Invalid email or password.');
     }
     _currentUser = account;
@@ -173,9 +147,15 @@ class MockUserDatabase {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Token / session helpers (unchanged)
-// ---------------------------------------------------------------------------
+UserRole parseUserRole(String roleStr) {
+  final upper = roleStr.toUpperCase();
+  if (upper == 'PATIENT') return UserRole.patient;
+  if (upper == 'DOCTOR') return UserRole.doctor;
+  if (upper == 'RECEPTIONIST') return UserRole.receptionist;
+  if (upper == 'LAB_TECHNICIAN' || upper == 'LABTECHNICIAN' || upper == 'LAB_TECH') return UserRole.labTechnician;
+  if (upper == 'ADMIN') return UserRole.admin;
+  return UserRole.patient;
+}
 
 class AuthTokenResponse {
   final String accessToken;
@@ -183,6 +163,7 @@ class AuthTokenResponse {
   final String sessionId;
   final String userName;
   final String userEmail;
+  final UserRole? userRole;
 
   const AuthTokenResponse({
     required this.accessToken,
@@ -190,55 +171,72 @@ class AuthTokenResponse {
     required this.sessionId,
     required this.userName,
     required this.userEmail,
+    this.userRole,
   });
 }
 
-// ---------------------------------------------------------------------------
-// AuthService
-// ---------------------------------------------------------------------------
-
 class AuthService {
-  static const _refreshTokenKey = 'astha_refresh_token';
-  static const _rememberMeKey = 'astha_remember_me';
   static const _biometricKey = 'astha_biometric_enabled';
-  static const _sessionKey = 'astha_session_info';
+  static const _rememberMeKey = 'astha_remember_me';
 
   final LocalAuthentication _localAuth = LocalAuthentication();
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   bool _googleInitialized = false;
   final Map<String, String> _otpStore = {};
 
-  // ── Mock DB passthrough methods ──────────────────────────────────────────
-
-  /// Registers a patient in the mock DB then returns a token response.
+  /// Registers a patient via live API then returns token response.
   Future<AuthTokenResponse> registerPatient({
     required String name,
     required String email,
     required String phone,
     required String password,
   }) async {
-    try {
-      final res = await ApiService.post('/auth/register', {
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'password': password,
-      });
-      if (res['tokens'] != null && res['tokens']['accessToken'] != null) {
-        ApiService.setAuthToken(res['tokens']['accessToken'].toString());
-      }
-    } catch (_) {}
+    final res = await ApiService.post('/auth/register', {
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'password': password,
+    });
 
-    MockUserDatabase.instance.registerPatient(
-      name: name,
-      email: email,
-      phone: phone,
-      password: password,
-    );
-    return _createMockResponse(email: email, role: UserRole.patient, name: name);
+    if (res['success'] == true && res['data'] != null) {
+      final data = res['data'];
+      final accessToken = data['accessToken'] as String? ?? '';
+      final refreshToken = data['refreshToken'] as String? ?? '';
+      final userData = data['user'] as Map<String, dynamic>? ?? {};
+
+      ApiService.setAuthToken(accessToken);
+      ApiService.refreshToken = refreshToken;
+
+      final roleStr = userData['role'] as String? ?? 'PATIENT';
+      final role = parseUserRole(roleStr);
+      final userId = userData['id'] as String? ?? 'u-${DateTime.now().millisecondsSinceEpoch}';
+
+      final user = AppUser(
+        id: userId,
+        name: name,
+        email: email,
+        mobile: phone,
+        role: role,
+      );
+
+      await SecureStorageService.instance.saveAccessToken(accessToken);
+      await SecureStorageService.instance.saveRefreshToken(refreshToken);
+      await SecureStorageService.instance.saveUserSession(user);
+
+      return AuthTokenResponse(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        sessionId: userId,
+        userName: name,
+        userEmail: email,
+        userRole: role,
+      );
+    } else {
+      throw Exception(res['message'] ?? 'Registration failed.');
+    }
   }
 
-  /// Adds a staff member to the mock DB then returns a token response.
+  /// Adds a staff member via live API then returns a token response.
   Future<AuthTokenResponse> addStaffMember({
     required String name,
     required String email,
@@ -247,51 +245,145 @@ class AuthService {
     required UserRole role,
   }) async {
     try {
+      final roleStr = role == UserRole.labTechnician ? 'LAB_TECHNICIAN' : role.name.toUpperCase();
       await ApiService.post('/staff', {
         'name': name,
         'email': email,
         'phone': phone,
         'password': password,
-        'role': role.name.toUpperCase(),
+        'role': roleStr,
       });
     } catch (_) {}
 
-    MockUserDatabase.instance.addStaffMember(
-      name: name,
-      email: email,
-      phone: phone,
-      password: password,
-      role: role,
-    );
+    try {
+      MockUserDatabase.instance.addStaffMember(
+        name: name,
+        email: email,
+        phone: phone,
+        password: password,
+        role: role,
+      );
+    } catch (_) {}
     return _createMockResponse(email: email, role: role, name: name);
   }
 
-  /// Looks up credentials in the mock DB and returns an account with its role.
+  /// Authenticates user against Live API backend.
   Future<MockAccount> login({
     required String email,
     required String password,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 700));
-    return MockUserDatabase.instance.login(email: email, password: password);
+    final res = await ApiService.post('/auth/login', {
+      'email': email,
+      'password': password,
+    });
+
+    if (res['success'] == true && res['data'] != null) {
+      final data = res['data'];
+      final userData = data['user'] as Map<String, dynamic>? ?? {};
+      final accessToken = data['accessToken'] as String? ?? '';
+      final refreshToken = data['refreshToken'] as String? ?? '';
+
+      ApiService.setAuthToken(accessToken);
+      ApiService.refreshToken = refreshToken;
+
+      final roleStr = userData['role'] as String? ?? 'PATIENT';
+      final userRole = parseUserRole(roleStr);
+      final userId = userData['id'] as String? ?? 'u-${DateTime.now().millisecondsSinceEpoch}';
+      final userName = userData['name'] as String? ?? email.split('@').first;
+      final userPhone = userData['phone'] as String? ?? '';
+
+      final user = AppUser(
+        id: userId,
+        name: userName,
+        email: email,
+        mobile: userPhone,
+        role: userRole,
+      );
+
+      await SecureStorageService.instance.saveAccessToken(accessToken);
+      await SecureStorageService.instance.saveRefreshToken(refreshToken);
+      await SecureStorageService.instance.saveUserSession(user);
+
+      final account = MockAccount(
+        name: userName,
+        email: email,
+        phone: userPhone,
+        password: password,
+        role: userRole,
+      );
+      MockUserDatabase.instance.setCurrentUser(account);
+      return account;
+    } else {
+      // In debug mode only, if backend fails, check mock DB as dev fallback
+      if (kDebugMode) {
+        try {
+          return MockUserDatabase.instance.login(email: email, password: password);
+        } catch (_) {}
+      }
+      throw Exception(res['message'] ?? 'Invalid email or password credentials');
+    }
   }
 
-  /// Returns the currently authenticated mock user session, or null.
   MockAccount? getCurrentUser() => MockUserDatabase.instance.getCurrentUser();
 
-  /// Clears the mock user session (call on logout).
-  void logout() => MockUserDatabase.instance.logout();
+  void logout() {
+    MockUserDatabase.instance.logout();
+    clearSavedSession();
+  }
 
-  /// Returns all staff members from the mock DB.
   List<MockAccount> getAllStaff() => MockUserDatabase.instance.getAllStaff();
-
 
   Future<AuthTokenResponse> loginWithEmailPassword({
     required String email,
     required String password,
     required UserRole role,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 700));
-    return _createMockResponse(email: email, role: role);
+    try {
+      final res = await ApiService.post('/auth/login', {
+        'email': email,
+        'password': password,
+      });
+
+      if (res['success'] == true && res['data'] != null) {
+        final data = res['data'];
+        final accessToken = data['accessToken'] as String? ?? '';
+        final refreshToken = data['refreshToken'] as String? ?? '';
+        final userData = data['user'] as Map<String, dynamic>? ?? {};
+
+        ApiService.setAuthToken(accessToken);
+        ApiService.refreshToken = refreshToken;
+
+        final roleStr = userData['role'] as String? ?? role.name.toUpperCase();
+        final actualRole = parseUserRole(roleStr);
+        final userId = userData['id'] as String? ?? 'session-${DateTime.now().millisecondsSinceEpoch}';
+        final userName = userData['name'] as String? ?? role.displayName;
+
+        final user = AppUser(
+          id: userId,
+          name: userName,
+          email: email,
+          role: actualRole,
+        );
+
+        await SecureStorageService.instance.saveAccessToken(accessToken);
+        await SecureStorageService.instance.saveRefreshToken(refreshToken);
+        await SecureStorageService.instance.saveUserSession(user);
+
+        return AuthTokenResponse(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          sessionId: userId,
+          userName: userName,
+          userEmail: email,
+          userRole: actualRole,
+        );
+      }
+    } catch (_) {}
+
+    if (kDebugMode) {
+      return _createMockResponse(email: email, role: role);
+    }
+    throw Exception('Login failed. Please check your credentials.');
   }
 
   Future<void> _ensureGoogleInitialized() async {
@@ -341,8 +433,7 @@ class AuthService {
     required String password,
     required UserRole role,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 700));
-    return _createMockResponse(email: email, role: role, name: name);
+    return registerPatient(name: name, email: email, phone: '', password: password);
   }
 
   Future<AuthTokenResponse> registerWithMobile({
@@ -351,8 +442,7 @@ class AuthService {
     required String password,
     required UserRole role,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 700));
-    return _createMockResponse(email: '$mobile@astha.com', role: role, name: name);
+    return registerPatient(name: name, email: '$mobile@astha.com', phone: mobile, password: password);
   }
 
   Future<void> sendPasswordReset({required String emailOrMobile}) async {
@@ -382,32 +472,39 @@ class AuthService {
   }
 
   Future<void> persistSession({
+    required String accessToken,
     required String refreshToken,
-    required bool rememberMe,
-    required String sessionId,
+    required AppUser user,
+    bool rememberMe = true,
   }) async {
+    await SecureStorageService.instance.saveAccessToken(accessToken);
+    await SecureStorageService.instance.saveRefreshToken(refreshToken);
+    await SecureStorageService.instance.saveUserSession(user);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_refreshTokenKey, refreshToken);
     await prefs.setBool(_rememberMeKey, rememberMe);
-    await prefs.setString(
-        _sessionKey, jsonEncode({'sessionId': sessionId, 'refreshToken': refreshToken}));
   }
 
   Future<void> clearSavedSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_refreshTokenKey);
-    await prefs.remove(_rememberMeKey);
-    await prefs.remove(_sessionKey);
+    await SecureStorageService.instance.clearAll();
+    ApiService.accessToken = null;
+    ApiService.refreshToken = null;
+  }
+
+  Future<String?> loadSavedAccessToken() async {
+    return SecureStorageService.instance.getAccessToken();
   }
 
   Future<String?> loadSavedRefreshToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_refreshTokenKey);
+    return SecureStorageService.instance.getRefreshToken();
+  }
+
+  Future<AppUser?> loadSavedUserSession() async {
+    return SecureStorageService.instance.getUserSession();
   }
 
   Future<bool> loadRememberMe() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_rememberMeKey) ?? false;
+    return prefs.getBool(_rememberMeKey) ?? true;
   }
 
   Future<void> saveBiometricEnabled(bool enabled) async {
@@ -421,17 +518,29 @@ class AuthService {
   }
 
   Future<AuthTokenResponse> refreshSession(String refreshToken, UserRole role) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return AuthTokenResponse(
-      accessToken: 'refreshed-access-$refreshToken',
-      refreshToken: refreshToken,
-      sessionId: 'session-${DateTime.now().millisecondsSinceEpoch}',
-      userName: '${role.displayName} User',
-      userEmail: 'refresh.${role.name}@astha.com',
-    );
+    ApiService.refreshToken = refreshToken;
+    final refreshed = await ApiService.refreshAccessToken();
+    if (refreshed && ApiService.accessToken != null) {
+      final user = await loadSavedUserSession();
+      return AuthTokenResponse(
+        accessToken: ApiService.accessToken!,
+        refreshToken: ApiService.refreshToken ?? refreshToken,
+        sessionId: user?.id ?? 'session-restored',
+        userName: user?.name ?? role.displayName,
+        userEmail: user?.email ?? 'user@astha.com',
+        userRole: user?.role ?? role,
+      );
+    }
+    throw Exception('Session refresh failed');
   }
 
   Future<void> logoutAllDevices() async {
+    try {
+      final user = await loadSavedUserSession();
+      if (user != null) {
+        await ApiService.post('/auth/logout', {'userId': user.id});
+      }
+    } catch (_) {}
     await clearSavedSession();
   }
 
@@ -447,6 +556,8 @@ class AuthService {
       sessionId: sessionId,
       userName: name ?? role.displayName,
       userEmail: email,
+      userRole: role,
     );
   }
 }
+

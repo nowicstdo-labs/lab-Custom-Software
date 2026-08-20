@@ -13,12 +13,12 @@ import 'core/config/app_config.dart';
 // ============================================================================
 
 /// When true: Uses offline mock data for development.
-/// When false: Connects to live NestJS REST API (http://localhost:3000/api/v1).
+/// When false: Connects to live NestJS REST API (https://astha-diagnostic-2.onrender.com/api/v1).
 // ignore: constant_identifier_names
 const bool MOCK_MODE = false;
 
 class AsthaApiClient {
-  static String baseUrl = AppConfig.apiBaseUrl;
+  static String get baseUrl => AppConfig.apiBaseUrl;
   static String? accessToken;
   static String? refreshToken;
 
@@ -851,7 +851,7 @@ class MockUserDatabase {
       'id': 'USR-001',
       'email': 'patient@astha.com',
       'password': 'password',
-      'name': 'Rahul Kumar',
+      'name': 'Patient User',
       'role': UserRole.patient,
     },
     {
@@ -2004,8 +2004,8 @@ class BookTestScreen extends ConsumerStatefulWidget {
 }
 
 class _BookTestScreenState extends ConsumerState<BookTestScreen> {
-  final _nameController = TextEditingController(text: 'Rahul Kumar');
-  final _dobController = TextEditingController(text: '12-05-1997');
+  final _nameController = TextEditingController();
+  final _dobController = TextEditingController();
   final _dateController = TextEditingController(text: '14-08-2026');
   String _selectedSlot = '10:00 AM';
   String _selectedTest = 'Complete Blood Count (CBC)';

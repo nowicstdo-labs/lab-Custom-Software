@@ -17,8 +17,19 @@ class _PatientProfileScreenState extends ConsumerState<PatientProfileScreen> {
   int _bottomNavIndex = 3; // Profile active tab
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(patientProfileProvider.notifier).fetchPatientProfile();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authUser = ref.watch(authProvider.select((s) => s.user));
     final profile = ref.watch(patientProfileProvider);
+    final displayName = profile.fullName.isNotEmpty ? profile.fullName : (authUser?.name ?? '');
+    final patientIdText = profile.patientId.isNotEmpty ? profile.patientId : (authUser?.id ?? '');
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -105,7 +116,7 @@ class _PatientProfileScreenState extends ConsumerState<PatientProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                profile.fullName,
+                                displayName,
                                 style: AppTextStyles.headline2.copyWith(
                                   color: Colors.white,
                                   fontSize: 20,
@@ -113,23 +124,25 @@ class _PatientProfileScreenState extends ConsumerState<PatientProfileScreen> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Text(
-                                    'Patient ID: ${profile.patientId}',
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.85),
-                                      fontSize: 12,
+                              if (patientIdText.isNotEmpty)
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Patient ID: $patientIdText',
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(alpha: 0.85),
+                                        fontSize: 12,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Icon(
-                                    Icons.copy_outlined,
-                                    color: Colors.white.withValues(alpha: 0.85),
-                                    size: 13,
-                                  ),
-                                ],
-                              ),
+                                    const SizedBox(width: 6),
+                                    Icon(
+                                      Icons.copy_outlined,
+                                      color: Colors.white.withValues(alpha: 0.85),
+                                      size: 13,
+                                    ),
+                                  ],
+                                ),
+
                               const SizedBox(height: 6),
                               if (profile.isVerified)
                                 Container(

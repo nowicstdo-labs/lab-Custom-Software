@@ -8,7 +8,8 @@ import '../providers/patient_profile_provider.dart';
 class ProfileInfoScreen extends ConsumerWidget {
   const ProfileInfoScreen({super.key});
 
-  int _calculateAge(String dobStr) {
+  int? _calculateAge(String dobStr) {
+    if (dobStr.isEmpty) return null;
     try {
       final parts = dobStr.split('-');
       if (parts.length == 3) {
@@ -21,16 +22,17 @@ class ProfileInfoScreen extends ConsumerWidget {
         if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
           age--;
         }
-        return age > 0 ? age : 28;
+        return age >= 0 ? age : null;
       }
     } catch (_) {}
-    return 28;
+    return null;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(patientProfileProvider);
     final ageYears = _calculateAge(profile.dob);
+
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -76,7 +78,7 @@ class ProfileInfoScreen extends ConsumerWidget {
                 _InfoTile(icon: Icons.person_outline, label: 'Full Name', value: profile.fullName),
                 _InfoTile(icon: Icons.badge_outlined, label: 'Patient ID', value: profile.patientId),
                 _InfoTile(icon: Icons.cake_outlined, label: 'Date of Birth', value: profile.dob),
-                _InfoTile(icon: Icons.calendar_month_outlined, label: 'Age', value: '$ageYears Years'),
+                _InfoTile(icon: Icons.calendar_month_outlined, label: 'Age', value: ageYears != null ? '$ageYears Years' : 'Not set'),
                 _InfoTile(icon: Icons.transgender_outlined, label: 'Gender', value: profile.gender),
                 _InfoTile(icon: Icons.water_drop_outlined, label: 'Blood Group', value: profile.bloodGroup),
               ],

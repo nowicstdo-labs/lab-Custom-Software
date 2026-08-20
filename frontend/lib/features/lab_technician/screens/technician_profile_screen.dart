@@ -60,7 +60,11 @@ class TechnicianProfileScreen extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    ).then((_) {
+      nameCtrl.dispose();
+      phoneCtrl.dispose();
+      emailCtrl.dispose();
+    });
   }
 
   void _showChangePasswordModal(BuildContext context) {
@@ -107,8 +111,12 @@ class TechnicianProfileScreen extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    ).then((_) {
+      oldPassCtrl.dispose();
+      newPassCtrl.dispose();
+    });
   }
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

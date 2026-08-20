@@ -1,0 +1,14 @@
+.dart_tool/
+.pub-cache/
+.pub/
+build/
+.git/
+.gitignore
+.env
+.env.*
+*.log
+android/
+ios/
+macos/
+linux/
+windows/

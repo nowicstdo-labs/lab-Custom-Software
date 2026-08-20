@@ -28,6 +28,18 @@ services:
       - key: CORS_ORIGIN
         value: "*"
 
+  # ── FLUTTER WEB FRONTEND ──────────────────────────────────────────────────
+  - type: web
+    name: astha-diagnostic-web
+    runtime: docker
+    region: singapore
+    plan: starter
+    rootDir: frontend
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: API_BASE_URL
+        value: https://astha-diagnostic-2.onrender.com/api/v1
+
 # ── POSTGRESQL DATABASE ──────────────────────────────────────────────────────
 databases:
   - name: astha-postgres-db
@@ -35,3 +47,4 @@ databases:
     user: astha_admin
     region: singapore
     plan: starter
+
