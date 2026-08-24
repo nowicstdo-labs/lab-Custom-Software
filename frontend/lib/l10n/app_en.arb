@@ -40,5 +40,55 @@
   "send_otp": "Send OTP",
   "email_address_label": "Email address",
   "mobile_number_label": "Mobile number",
-  "mobile_number_hint": "+91 98765 43210"
+  "mobile_number_hint": "+91 98765 43210",
+
+  "nav_home": "Home",
+  "nav_tests": "Tests",
+  "nav_reports": "Reports",
+  "nav_appointments": "Appointments",
+  "nav_profile": "Profile",
+
+  "home_greeting": "Hello, Welcome!",
+  "home_search_placeholder": "Search diagnostic tests, packages...",
+  "home_quick_actions": "Quick Actions",
+  "home_book_test": "Book a Test",
+  "home_my_reports": "My Reports",
+  "home_doctor_consult": "Doctor Consult",
+  "home_health_packages": "Health Packages",
+  "home_upcoming_appointments": "Upcoming Appointments",
+  "home_recent_reports": "Recent Reports",
+
+  "doctor_dashboard_title": "Doctor Dashboard",
+  "doctor_patients": "Patient List",
+  "doctor_today_appointments": "Today's Appointments",
+  "doctor_prescriptions": "Prescriptions",
+
+  "test_catalog_title": "Diagnostic Test Catalog",
+  "test_search_hint": "Search by test name or category...",
+  "test_categories": "Categories",
+  "test_instructions": "Test Instructions",
+  "test_price": "Price",
+  "test_book_now": "Book Now",
+
+  "profile_title": "My Profile",
+  "profile_edit": "Edit Profile",
+  "profile_settings": "Settings",
+  "profile_security": "Security & Privacy",
+  "profile_logout": "Logout",
+  "profile_logout_confirm": "Are you sure you want to logout?",
+
+  "settings_language": "Language Preference",
+  "settings_notifications": "Notifications",
+  "settings_about": "About Application",
+
+  "btn_cancel": "Cancel",
+  "btn_confirm": "Confirm",
+  "btn_retry": "Retry",
+  "btn_save": "Save Changes",
+
+  "state_loading": "Loading...",
+  "state_empty": "No items found",
+  "state_error": "Something went wrong",
+  "err_no_internet": "No internet connection",
+  "err_timeout": "Unable to connect to server. Please try again."
 }

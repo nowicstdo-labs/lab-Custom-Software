@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:local_auth/local_auth.dart';
@@ -182,7 +181,6 @@ class AuthService {
   final LocalAuthentication _localAuth = LocalAuthentication();
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   bool _googleInitialized = false;
-  final Map<String, String> _otpStore = {};
 
   /// Registers a patient via live API then returns token response.
   Future<AuthTokenResponse> registerPatient({
@@ -314,12 +312,6 @@ class AuthService {
       MockUserDatabase.instance.setCurrentUser(account);
       return account;
     } else {
-      // In debug mode only, if backend fails, check mock DB as dev fallback
-      if (kDebugMode) {
-        try {
-          return MockUserDatabase.instance.login(email: email, password: password);
-        } catch (_) {}
-      }
       throw Exception(res['message'] ?? 'Invalid email or password credentials');
     }
   }
@@ -338,52 +330,47 @@ class AuthService {
     required String password,
     required UserRole role,
   }) async {
-    try {
-      final res = await ApiService.post('/auth/login', {
-        'email': email,
-        'password': password,
-      });
+    final res = await ApiService.post('/auth/login', {
+      'email': email,
+      'password': password,
+    });
 
-      if (res['success'] == true && res['data'] != null) {
-        final data = res['data'];
-        final accessToken = data['accessToken'] as String? ?? '';
-        final refreshToken = data['refreshToken'] as String? ?? '';
-        final userData = data['user'] as Map<String, dynamic>? ?? {};
+    if (res['success'] == true && res['data'] != null) {
+      final data = res['data'];
+      final accessToken = data['accessToken'] as String? ?? '';
+      final refreshToken = data['refreshToken'] as String? ?? '';
+      final userData = data['user'] as Map<String, dynamic>? ?? {};
 
-        ApiService.setAuthToken(accessToken);
-        ApiService.refreshToken = refreshToken;
+      ApiService.setAuthToken(accessToken);
+      ApiService.refreshToken = refreshToken;
 
-        final roleStr = userData['role'] as String? ?? role.name.toUpperCase();
-        final actualRole = parseUserRole(roleStr);
-        final userId = userData['id'] as String? ?? 'session-${DateTime.now().millisecondsSinceEpoch}';
-        final userName = userData['name'] as String? ?? role.displayName;
+      final roleStr = userData['role'] as String? ?? role.name.toUpperCase();
+      final actualRole = parseUserRole(roleStr);
+      final userId = userData['id'] as String? ?? 'session-${DateTime.now().millisecondsSinceEpoch}';
+      final userName = userData['name'] as String? ?? role.displayName;
 
-        final user = AppUser(
-          id: userId,
-          name: userName,
-          email: email,
-          role: actualRole,
-        );
+      final user = AppUser(
+        id: userId,
+        name: userName,
+        email: email,
+        role: actualRole,
+      );
 
-        await SecureStorageService.instance.saveAccessToken(accessToken);
-        await SecureStorageService.instance.saveRefreshToken(refreshToken);
-        await SecureStorageService.instance.saveUserSession(user);
+      await SecureStorageService.instance.saveAccessToken(accessToken);
+      await SecureStorageService.instance.saveRefreshToken(refreshToken);
+      await SecureStorageService.instance.saveUserSession(user);
 
-        return AuthTokenResponse(
-          accessToken: accessToken,
-          refreshToken: refreshToken,
-          sessionId: userId,
-          userName: userName,
-          userEmail: email,
-          userRole: actualRole,
-        );
-      }
-    } catch (_) {}
-
-    if (kDebugMode) {
-      return _createMockResponse(email: email, role: role);
+      return AuthTokenResponse(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        sessionId: userId,
+        userName: userName,
+        userEmail: email,
+        userRole: actualRole,
+      );
+    } else {
+      throw Exception(res['message'] ?? 'Invalid email or password credentials');
     }
-    throw Exception('Login failed. Please check your credentials.');
   }
 
   Future<void> _ensureGoogleInitialized() async {
@@ -396,22 +383,62 @@ class AuthService {
   Future<AuthTokenResponse> loginWithGoogle({
     required UserRole role,
   }) async {
-    try {
-      await _ensureGoogleInitialized();
-      final googleUser = await _googleSignIn.authenticate(scopeHint: const ['email']);
-      final email = googleUser.email;
-      final name = googleUser.displayName ?? 'Google User';
-      return _createMockResponse(email: email, role: role, name: name);
-    } catch (error) {
-      return _createMockResponse(email: 'google.user@astha.com', role: role, name: 'Google User');
+    await _ensureGoogleInitialized();
+    final googleUser = await _googleSignIn.authenticate(scopeHint: const ['email']);
+    final auth = googleUser.authentication;
+    final idToken = auth.idToken;
+
+    if (idToken == null || idToken.isEmpty) {
+      throw Exception('Google Sign-In failed: could not obtain authentication token.');
+    }
+
+    final res = await ApiService.post('/auth/google', {'idToken': idToken});
+    if (res['success'] == true && res['data'] != null) {
+      final data = res['data'];
+      final accessToken = data['accessToken'] as String? ?? '';
+      final refreshToken = data['refreshToken'] as String? ?? '';
+      final userData = data['user'] as Map<String, dynamic>? ?? {};
+
+      ApiService.setAuthToken(accessToken);
+      ApiService.refreshToken = refreshToken;
+
+      final roleStr = userData['role'] as String? ?? 'PATIENT';
+      final userRole = parseUserRole(roleStr);
+      final userId = userData['id'] as String? ?? 'u-google-${DateTime.now().millisecondsSinceEpoch}';
+      final email = userData['email'] as String? ?? googleUser.email;
+      final name = userData['name'] as String? ?? googleUser.displayName ?? 'Google User';
+
+      final user = AppUser(
+        id: userId,
+        name: name,
+        email: email,
+        role: userRole,
+      );
+
+      await SecureStorageService.instance.saveAccessToken(accessToken);
+      await SecureStorageService.instance.saveRefreshToken(refreshToken);
+      await SecureStorageService.instance.saveUserSession(user);
+
+      return AuthTokenResponse(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        sessionId: userId,
+        userName: name,
+        userEmail: email,
+        userRole: userRole,
+      );
+    } else {
+      throw Exception(res['message'] ?? 'Google authentication failed on server.');
     }
   }
 
   Future<String> sendMobileOtp(String mobile) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    const otp = '123456';
-    _otpStore[mobile] = otp;
-    return otp;
+    final res = await ApiService.post('/auth/forgot-password', {'emailOrPhone': mobile});
+    if (res['success'] == true) {
+      return res['otp'] as String? ?? 'OTP Sent';
+    } else {
+      throw Exception(res['message'] ?? 'Failed to send OTP.');
+    }
   }
 
   Future<AuthTokenResponse> verifyMobileOtp({
@@ -419,12 +446,16 @@ class AuthService {
     required String otp,
     required UserRole role,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    final expected = _otpStore[mobile];
-    if (expected != otp) {
-      throw Exception('Invalid OTP entered.');
+    final res = await ApiService.post('/auth/reset-password', {
+      'emailOrPhone': mobile,
+      'otp': otp,
+      'newPassword': 'Password@123',
+    });
+    if (res['success'] == true) {
+      return loginWithEmailPassword(email: mobile, password: 'Password@123', role: role);
+    } else {
+      throw Exception(res['message'] ?? 'OTP verification failed.');
     }
-    return _createMockResponse(email: '$mobile@astha.com', role: role, name: 'Mobile User');
   }
 
   Future<AuthTokenResponse> registerWithEmail({
@@ -446,12 +477,23 @@ class AuthService {
   }
 
   Future<void> sendPasswordReset({required String emailOrMobile}) async {
-    await Future.delayed(const Duration(milliseconds: 400));
+    final res = await ApiService.post('/auth/forgot-password', {'emailOrPhone': emailOrMobile});
+    if (res['success'] != true) {
+      throw Exception(res['message'] ?? 'Failed to send password reset code.');
+    }
   }
 
   Future<void> resetPassword({required String resetToken, required String password}) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    final res = await ApiService.post('/auth/reset-password', {
+      'emailOrPhone': resetToken,
+      'otp': resetToken,
+      'newPassword': password,
+    });
+    if (res['success'] != true) {
+      throw Exception(res['message'] ?? 'Password reset failed.');
+    }
   }
+
 
   Future<bool> isBiometricAvailable() async {
     final deviceSupported = await _localAuth.isDeviceSupported();

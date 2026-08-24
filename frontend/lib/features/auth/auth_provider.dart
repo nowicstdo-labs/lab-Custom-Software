@@ -235,6 +235,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await _service.resetPassword(resetToken: resetToken, password: password);
   }
 
+  Future<String> resetPasswordWithOtp({
+    required String emailOrPhone,
+    required String otp,
+    required String password,
+  }) async {
+    final res = await ApiService.post('/auth/reset-password', {
+      'emailOrPhone': emailOrPhone,
+      'otp': otp,
+      'newPassword': password,
+    });
+
+    if (res['success'] == true) {
+      return res['message'] as String? ?? 'Password reset successfully.';
+    } else {
+      throw Exception(res['message'] ?? 'Password reset failed.');
+    }
+  }
+
   Future<bool> isBiometricAvailable() => _service.isBiometricAvailable();
 
   Future<bool> authenticateBiometric() => _service.authenticateBiometric();

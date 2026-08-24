@@ -40,7 +40,6 @@ class LocaleNotifier extends StateNotifier<Locale> {
 String getLanguageCode(String lang) {
   if (lang.contains('Bengali') || lang.contains('বাংলা')) return 'bn';
   if (lang.contains('Hindi') || lang.contains('हिन्दी')) return 'hi';
-  if (lang.contains('Urdu') || lang.contains('اردو')) return 'ur';
   return 'en';
 }
 
@@ -50,9 +49,8 @@ String getLanguageName(String code) {
       return 'বাংলা (Bengali)';
     case 'hi':
       return 'हिन्दी (Hindi)';
-    case 'ur':
-      return 'اردو (Urdu)';
     default:
       return 'English';
   }
 }
+

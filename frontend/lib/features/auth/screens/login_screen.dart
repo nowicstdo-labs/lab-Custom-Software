@@ -62,11 +62,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
+    // ── Email format validation ──────────────────────────────────────────────
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please enter a valid email address.'),
+          backgroundColor: Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      await ref.read(authProvider.notifier).loginWithMockDB(
+      await ref.read(authProvider.notifier).loginWithEmailPassword(
             email: email,
             password: password,
+            role: UserRole.patient,
             rememberMe: _rememberMe,
           );
       _finishLogin();

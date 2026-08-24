@@ -64,8 +64,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           );
       if (mounted) {
         setState(() => _isLoading = false);
-        _showSnackBar('Account created! Please sign in.');
-        context.go('/login');
+        _showSnackBar('Account created successfully!');
+        final redirect = ref.read(authProvider).redirectPath;
+        context.go(redirect);
       }
     } catch (e) {
       if (mounted) {

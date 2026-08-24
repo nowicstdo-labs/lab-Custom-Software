@@ -28,3 +28,30 @@ export class RefreshTokenDto {
   @IsNotEmpty()
   refreshToken: string;
 }
+
+export class GoogleLoginDto {
+  @IsNotEmpty()
+  @IsString()
+  idToken: string;
+}
+
+export class ForgotPasswordDto {
+  @IsNotEmpty()
+  @IsString()
+  emailOrPhone: string;
+}
+
+export class ResetPasswordDto {
+  @IsNotEmpty()
+  @IsString()
+  emailOrPhone: string;
+
+  @IsNotEmpty()
+  @IsString()
+  otp: string;
+
+  @IsNotEmpty()
+  @MinLength(6)
+  newPassword: string;
+}
+

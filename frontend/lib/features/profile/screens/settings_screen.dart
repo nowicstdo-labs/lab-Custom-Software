@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../auth/auth_provider.dart';
+import '../../auth/locale_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -16,7 +17,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _notificationsEnabled = true;
   bool _smsUpdatesEnabled = true;
   bool _biometricEnabled = false;
-  String _selectedLanguage = 'English';
 
   @override
   Widget build(BuildContext context) {
@@ -90,12 +90,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: ListTile(
               title: const Text('App Language', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
               trailing: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedLanguage,
-                  items: ['English', 'Hindi', 'Bengali', 'Urdu']
-                      .map((lang) => DropdownMenuItem(value: lang, child: Text(lang)))
-                      .toList(),
-                  onChanged: (v) => setState(() => _selectedLanguage = v!),
+                child: Consumer(
+                  builder: (context, ref, child) {
+                    final currentLocale = ref.watch(localeProvider);
+                    final currentLangName = getLanguageName(currentLocale.languageCode);
+
+                    return DropdownButton<String>(
+                      value: ['English', 'हिन्दी (Hindi)', 'বাংলা (Bengali)'].contains(currentLangName)
+                          ? currentLangName
+                          : 'English',
+                      items: ['English', 'हिन्दी (Hindi)', 'বাংলা (Bengali)']
+                          .map((lang) => DropdownMenuItem(value: lang, child: Text(lang)))
+                          .toList(),
+                      onChanged: (v) {
+                        if (v != null) {
+                          ref.read(localeProvider.notifier).setLocale(getLanguageCode(v));
+                        }
+                      },
+                    );
+                  },
                 ),
               ),
             ),
