@@ -24,9 +24,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       if (mounted) {
         context.go('/reset-password');
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to send reset link.')));
+        final rawMsg = e.toString().replaceFirst('Exception: ', '').trim();
+        final msg = rawMsg.isNotEmpty && !rawMsg.toLowerCase().contains('internal server error')
+            ? rawMsg
+            : 'Unable to send reset link. Please try again later.';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
       }
     } finally {
       if (mounted) {

@@ -345,6 +345,258 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'+91 98765 43210'**
   String get mobile_number_hint;
+
+  /// No description provided for @nav_home.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get nav_home;
+
+  /// No description provided for @nav_tests.
+  ///
+  /// In en, this message translates to:
+  /// **'Tests'**
+  String get nav_tests;
+
+  /// No description provided for @nav_reports.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports'**
+  String get nav_reports;
+
+  /// No description provided for @nav_appointments.
+  ///
+  /// In en, this message translates to:
+  /// **'Appointments'**
+  String get nav_appointments;
+
+  /// No description provided for @nav_profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get nav_profile;
+
+  /// No description provided for @home_greeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Hello, Welcome!'**
+  String get home_greeting;
+
+  /// No description provided for @home_search_placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Search diagnostic tests, packages...'**
+  String get home_search_placeholder;
+
+  /// No description provided for @home_quick_actions.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Actions'**
+  String get home_quick_actions;
+
+  /// No description provided for @home_book_test.
+  ///
+  /// In en, this message translates to:
+  /// **'Book a Test'**
+  String get home_book_test;
+
+  /// No description provided for @home_my_reports.
+  ///
+  /// In en, this message translates to:
+  /// **'My Reports'**
+  String get home_my_reports;
+
+  /// No description provided for @home_doctor_consult.
+  ///
+  /// In en, this message translates to:
+  /// **'Doctor Consult'**
+  String get home_doctor_consult;
+
+  /// No description provided for @home_health_packages.
+  ///
+  /// In en, this message translates to:
+  /// **'Health Packages'**
+  String get home_health_packages;
+
+  /// No description provided for @home_upcoming_appointments.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming Appointments'**
+  String get home_upcoming_appointments;
+
+  /// No description provided for @home_recent_reports.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Reports'**
+  String get home_recent_reports;
+
+  /// No description provided for @doctor_dashboard_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Doctor Dashboard'**
+  String get doctor_dashboard_title;
+
+  /// No description provided for @doctor_patients.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient List'**
+  String get doctor_patients;
+
+  /// No description provided for @doctor_today_appointments.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Appointments'**
+  String get doctor_today_appointments;
+
+  /// No description provided for @doctor_prescriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Prescriptions'**
+  String get doctor_prescriptions;
+
+  /// No description provided for @test_catalog_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostic Test Catalog'**
+  String get test_catalog_title;
+
+  /// No description provided for @test_search_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by test name or category...'**
+  String get test_search_hint;
+
+  /// No description provided for @test_categories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get test_categories;
+
+  /// No description provided for @test_instructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Test Instructions'**
+  String get test_instructions;
+
+  /// No description provided for @test_price.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get test_price;
+
+  /// No description provided for @test_book_now.
+  ///
+  /// In en, this message translates to:
+  /// **'Book Now'**
+  String get test_book_now;
+
+  /// No description provided for @profile_title.
+  ///
+  /// In en, this message translates to:
+  /// **'My Profile'**
+  String get profile_title;
+
+  /// No description provided for @profile_edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get profile_edit;
+
+  /// No description provided for @profile_settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get profile_settings;
+
+  /// No description provided for @profile_security.
+  ///
+  /// In en, this message translates to:
+  /// **'Security & Privacy'**
+  String get profile_security;
+
+  /// No description provided for @profile_logout.
+  ///
+  /// In en, this message translates to:
+  /// **'Logout'**
+  String get profile_logout;
+
+  /// No description provided for @profile_logout_confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to logout?'**
+  String get profile_logout_confirm;
+
+  /// No description provided for @settings_language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language Preference'**
+  String get settings_language;
+
+  /// No description provided for @settings_notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settings_notifications;
+
+  /// No description provided for @settings_about.
+  ///
+  /// In en, this message translates to:
+  /// **'About Application'**
+  String get settings_about;
+
+  /// No description provided for @btn_cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get btn_cancel;
+
+  /// No description provided for @btn_confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get btn_confirm;
+
+  /// No description provided for @btn_retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get btn_retry;
+
+  /// No description provided for @btn_save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get btn_save;
+
+  /// No description provided for @state_loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get state_loading;
+
+  /// No description provided for @state_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No items found'**
+  String get state_empty;
+
+  /// No description provided for @state_error.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get state_error;
+
+  /// No description provided for @err_no_internet.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection'**
+  String get err_no_internet;
+
+  /// No description provided for @err_timeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to connect to server. Please try again.'**
+  String get err_timeout;
 }
 
 class _AppLocalizationsDelegate

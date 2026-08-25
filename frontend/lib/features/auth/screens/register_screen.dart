@@ -71,7 +71,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        _showSnackBar(e.toString().replaceFirst('Exception: ', ''));
+        final rawMsg = e.toString().replaceFirst('Exception: ', '').trim();
+        final msg = rawMsg.isNotEmpty && !rawMsg.toLowerCase().contains('internal server error')
+            ? rawMsg
+            : 'Unable to create account. Please try again.';
+        _showSnackBar(msg);
       }
     }
   }

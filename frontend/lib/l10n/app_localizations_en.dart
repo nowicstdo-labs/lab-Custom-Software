@@ -131,4 +131,130 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mobile_number_hint => '+91 98765 43210';
+
+  @override
+  String get nav_home => 'Home';
+
+  @override
+  String get nav_tests => 'Tests';
+
+  @override
+  String get nav_reports => 'Reports';
+
+  @override
+  String get nav_appointments => 'Appointments';
+
+  @override
+  String get nav_profile => 'Profile';
+
+  @override
+  String get home_greeting => 'Hello, Welcome!';
+
+  @override
+  String get home_search_placeholder => 'Search diagnostic tests, packages...';
+
+  @override
+  String get home_quick_actions => 'Quick Actions';
+
+  @override
+  String get home_book_test => 'Book a Test';
+
+  @override
+  String get home_my_reports => 'My Reports';
+
+  @override
+  String get home_doctor_consult => 'Doctor Consult';
+
+  @override
+  String get home_health_packages => 'Health Packages';
+
+  @override
+  String get home_upcoming_appointments => 'Upcoming Appointments';
+
+  @override
+  String get home_recent_reports => 'Recent Reports';
+
+  @override
+  String get doctor_dashboard_title => 'Doctor Dashboard';
+
+  @override
+  String get doctor_patients => 'Patient List';
+
+  @override
+  String get doctor_today_appointments => 'Today\'s Appointments';
+
+  @override
+  String get doctor_prescriptions => 'Prescriptions';
+
+  @override
+  String get test_catalog_title => 'Diagnostic Test Catalog';
+
+  @override
+  String get test_search_hint => 'Search by test name or category...';
+
+  @override
+  String get test_categories => 'Categories';
+
+  @override
+  String get test_instructions => 'Test Instructions';
+
+  @override
+  String get test_price => 'Price';
+
+  @override
+  String get test_book_now => 'Book Now';
+
+  @override
+  String get profile_title => 'My Profile';
+
+  @override
+  String get profile_edit => 'Edit Profile';
+
+  @override
+  String get profile_settings => 'Settings';
+
+  @override
+  String get profile_security => 'Security & Privacy';
+
+  @override
+  String get profile_logout => 'Logout';
+
+  @override
+  String get profile_logout_confirm => 'Are you sure you want to logout?';
+
+  @override
+  String get settings_language => 'Language Preference';
+
+  @override
+  String get settings_notifications => 'Notifications';
+
+  @override
+  String get settings_about => 'About Application';
+
+  @override
+  String get btn_cancel => 'Cancel';
+
+  @override
+  String get btn_confirm => 'Confirm';
+
+  @override
+  String get btn_retry => 'Retry';
+
+  @override
+  String get btn_save => 'Save Changes';
+
+  @override
+  String get state_loading => 'Loading...';
+
+  @override
+  String get state_empty => 'No items found';
+
+  @override
+  String get state_error => 'Something went wrong';
+
+  @override
+  String get err_no_internet => 'No internet connection';
+
+  @override
+  String get err_timeout => 'Unable to connect to server. Please try again.';
 }

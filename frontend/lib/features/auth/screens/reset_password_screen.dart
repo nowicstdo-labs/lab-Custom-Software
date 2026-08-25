@@ -68,7 +68,11 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+        final rawMsg = e.toString().replaceFirst('Exception: ', '').trim();
+        final msg = rawMsg.isNotEmpty && !rawMsg.toLowerCase().contains('internal server error')
+            ? rawMsg
+            : 'Password reset failed. Please check your verification code and try again.';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
       }
     } finally {
       if (mounted) {
