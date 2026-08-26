@@ -33,18 +33,29 @@ export class HttpExceptionFilter implements ExceptionFilter {
       // Prisma error mapping
       if (exception.code === 'P2002') {
         status = HttpStatus.CONFLICT;
-        const target = (exception.meta?.target as string[]) || [];
-        if (target.includes('email')) {
-          errorMessage = 'An account with this email address already exists.';
-        } else if (target.includes('phone')) {
-          errorMessage = 'An account with this mobile number already exists.';
+        const targetStr = JSON.stringify(exception.meta?.target || '').toLowerCase();
+        if (targetStr.includes('email')) {
+          errorMessage = 'An account with this email address already exists. Please log in.';
+        } else if (targetStr.includes('phone')) {
+          errorMessage = 'An account with this mobile number already exists. Please log in.';
+        } else if (targetStr.includes('patientid') || targetStr.includes('patient_id')) {
+          errorMessage = 'Patient registration conflict. Please try submitting again.';
         } else {
-          errorMessage = 'A record with this information already exists.';
+          errorMessage = 'An account or record with this information already exists.';
         }
-        this.logger.warn(`[PRISMA CONFLICT] ${request.method} ${request.url} - P2002 ${target.join(', ')}`);
+        this.logger.warn(`[PRISMA CONFLICT] ${request.method} ${request.url} - P2002 ${targetStr}`);
+      } else if (exception.code === 'P2000') {
+        status = HttpStatus.BAD_REQUEST;
+        errorMessage = 'One of the provided values is too long.';
+      } else if (exception.code === 'P2003') {
+        status = HttpStatus.BAD_REQUEST;
+        errorMessage = 'Referenced record was not found in database.';
+      } else if (exception.code === 'P2025') {
+        status = HttpStatus.NOT_FOUND;
+        errorMessage = 'Requested record was not found.';
       } else {
         status = HttpStatus.BAD_REQUEST;
-        errorMessage = 'Database request error. Please verify input parameters.';
+        errorMessage = `Database request error (${exception.code}). Please verify input parameters.`;
         this.logger.error(`[PRISMA ERROR ${exception.code}] ${request.method} ${request.url}`, exception.stack);
       }
     } else if (exception instanceof Prisma.PrismaClientInitializationError) {

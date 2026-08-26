@@ -21,14 +21,14 @@ export class AuthService {
 
     const existingEmail = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existingEmail) {
-      throw new ConflictException('An account with this email address already exists.');
+      throw new ConflictException('An account with this email address already exists. Please log in.');
     }
 
     if (dto.phone && dto.phone.trim().length > 0) {
       const normalizedPhone = dto.phone.trim();
       const existingPhone = await this.prisma.user.findFirst({ where: { phone: normalizedPhone } });
       if (existingPhone) {
-        throw new ConflictException('An account with this mobile number already exists.');
+        throw new ConflictException('An account with this mobile number already exists. Please log in.');
       }
     }
 

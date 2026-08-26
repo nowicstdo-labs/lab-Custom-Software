@@ -75,16 +75,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         final msg = rawMsg.isNotEmpty && !rawMsg.toLowerCase().contains('internal server error')
             ? rawMsg
             : 'Unable to create account. Please try again.';
-        _showSnackBar(msg);
+        final isConflict = msg.toLowerCase().contains('already exists') || msg.toLowerCase().contains('log in');
+        _showSnackBar(msg, showLoginAction: isConflict);
       }
     }
   }
 
-  void _showSnackBar(String message) {
+  void _showSnackBar(String message, {bool showLoginAction = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
         behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: showLoginAction ? 6 : 4),
+        action: showLoginAction
+            ? SnackBarAction(
+                label: 'LOG IN',
+                textColor: Colors.amber,
+                onPressed: () => context.go('/login'),
+              )
+            : null,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
