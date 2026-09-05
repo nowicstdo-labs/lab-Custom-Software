@@ -64,6 +64,8 @@ export class BookingsService {
       });
 
       return booking;
+    }).catch((error) => {
+      throw new BadRequestException(`Booking failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     });
   }
 

@@ -1123,18 +1123,29 @@ class TestBooking {
 
   factory TestBooking.fromJson(Map<String, dynamic> json) {
     return TestBooking(
-      bookingId: json['bookingId'] as String,
-      patientId: json['patientId'] as String,
-      patientName: json['patientName'] as String,
-      patientDob: json['patientDob'] as String,
-      testName: json['testName'] as String,
-      appointmentDate: json['appointmentDate'] as String,
-      timeSlot: json['timeSlot'] as String,
-      price: (json['price'] as num).toDouble(),
-      status: json['status'] as String,
-      sampleStatus: json['sampleStatus'] as String,
-      reportStatus: json['reportStatus'] as String,
+      bookingId: json['bookingId']?.toString() ?? '',
+      patientId: json['patientId']?.toString() ?? '',
+      patientName: json['patientName']?.toString() ?? '',
+      patientDob: json['patientDob']?.toString() ?? '',
+      testName: json['testName']?.toString() ?? '',
+      appointmentDate: json['appointmentDate']?.toString() ?? '',
+      timeSlot: json['timeSlot']?.toString() ?? '',
+      price: _safeToDouble(json['price']) ?? 0.0,
+      status: json['status']?.toString() ?? '',
+      sampleStatus: json['sampleStatus']?.toString() ?? '',
+      reportStatus: json['reportStatus']?.toString() ?? '',
     );
+  }
+
+  static double? _safeToDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value);
+    }
+    return null;
   }
 }
 

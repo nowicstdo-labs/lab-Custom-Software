@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import * as argon2 from 'argon2';
 
 @Injectable()
 export class DoctorsService {
@@ -33,14 +34,16 @@ export class DoctorsService {
     });
   }
 
-  async createDoctor(dto: { name: string; specialization: string; qualification?: string; experienceYears?: number; consultationFee?: number }) {
+  async createDoctor(dto: { name: string; specialization: string; qualification?: string; experienceYears?: number; consultationFee?: number; password?: string }) {
     const doctorId = `DOC-${Math.floor(1000 + Math.random() * 9000)}`;
+    const defaultPassword = dto.password || 'Doctor@123';
+    const passwordHash = await argon2.hash(defaultPassword);
     const user = await this.prisma.user.create({
       data: {
         name: dto.name,
         email: `doctor.${doctorId.toLowerCase()}@astha.com`,
         phone: `+91 ${Math.floor(9000000000 + Math.random() * 999999999)}`,
-        passwordHash: '$argon2id$v=19$m=65536,t=3,p=4$mockHash',
+        passwordHash,
         role: 'DOCTOR',
       },
     });

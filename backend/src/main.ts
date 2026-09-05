@@ -16,8 +16,16 @@ async function bootstrap() {
 
   // CORS Configuration
   const corsOrigin = process.env.CORS_ORIGIN;
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  if (isProduction && (!corsOrigin || corsOrigin === '*')) {
+    console.warn('⚠️  WARNING: CORS_ORIGIN is not configured for production. This may be a security risk.');
+  }
+  
   app.enableCors({
-    origin: corsOrigin === '*' ? true : (corsOrigin ? corsOrigin.split(',') : true),
+    origin: corsOrigin && corsOrigin !== '*' 
+      ? corsOrigin.split(',').map(origin => origin.trim()) 
+      : isProduction ? false : true,
     credentials: true,
   });
 

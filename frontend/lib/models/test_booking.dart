@@ -75,7 +75,7 @@ class TestBooking {
       category: (testObj['category'] ?? 'General').toString(),
       description: (testObj['description'] ?? 'Diagnostic test booking.').toString(),
       sampleType: (testObj['sampleType'] ?? 'Blood / Sample').toString(),
-      price: (json['price'] as num?)?.toDouble() ?? (testObj['price'] as num?)?.toDouble() ?? 0.0,
+      price: _safeToDouble(json['price']) ?? _safeToDouble(testObj['price']) ?? 0.0,
       bookingId: (json['bookingId'] ?? json['id'] ?? '').toString(),
       patientId: pId,
       patientName: pName,
@@ -105,4 +105,15 @@ class TestBooking {
   bool get isReportAvailable =>
       currentStage == TestStage.reportReady ||
       currentStage == TestStage.completed;
+
+  static double? _safeToDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value);
+    }
+    return null;
+  }
 }

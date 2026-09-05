@@ -50,6 +50,8 @@ export class AppointmentsService {
         },
         include: { doctor: { include: { user: true } }, patient: { include: { user: true } } },
       });
+    }).catch((error) => {
+      throw new BadRequestException(`Appointment booking failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     });
   }
 

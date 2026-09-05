@@ -50,7 +50,7 @@ export class EmailService {
 
     if (!this.transporter) {
       this.logger.warn(
-        `[DIAGNOSTIC] Password reset requested for ${toEmail}. SMTP not configured on Render. Generated OTP: ${otp}. Please set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM in Render dashboard.`,
+        `[DIAGNOSTIC] Password reset requested for ${toEmail}. SMTP not configured. Please set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM in environment variables.`,
       );
       return false;
     }

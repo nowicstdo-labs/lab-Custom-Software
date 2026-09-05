@@ -11,7 +11,7 @@ class ApiService {
   static String get baseUrl => AppConfig.apiBaseUrl;
   static String? accessToken;
   static String? refreshToken;
-  static bool _isRefreshing = false;
+  static Future<bool>? _refreshFuture;
   static const Duration _timeoutDuration = Duration(seconds: 30);
 
   static void setAuthToken(String token) {
@@ -114,10 +114,9 @@ class ApiService {
       decoded = {'message': response.body};
     }
 
-    if (response.statusCode == 401 && refreshToken != null && !_isRefreshing) {
-      _isRefreshing = true;
-      final refreshed = await refreshAccessToken();
-      _isRefreshing = false;
+    if (response.statusCode == 401 && refreshToken != null) {
+      _refreshFuture ??= refreshAccessToken().whenComplete(() => _refreshFuture = null);
+      final refreshed = await _refreshFuture!;
       if (refreshed) {
         return await retryCall();
       }

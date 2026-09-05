@@ -34,13 +34,20 @@ export class AuthService {
 
     const passwordHash = await argon2.hash(dto.password);
 
-    let patientId = `ASTH-P-${Math.floor(100000 + Math.random() * 900000)}`;
+    let patientId: string;
     let attempts = 0;
-    while (attempts < 5) {
-      const existingProfile = await this.prisma.patientProfile.findUnique({ where: { patientId } });
-      if (!existingProfile) break;
+    let unique = false;
+    while (!unique && attempts < 10) {
       patientId = `ASTH-P-${Math.floor(100000 + Math.random() * 900000)}`;
+      const existingProfile = await this.prisma.patientProfile.findUnique({ where: { patientId } });
+      if (!existingProfile) {
+        unique = true;
+        break;
+      }
       attempts++;
+    }
+    if (!unique) {
+      throw new ConflictException('Unable to generate unique patient ID. Please try again.');
     }
 
     try {
@@ -168,7 +175,6 @@ export class AuthService {
     return {
       success: true,
       message: 'Password reset code has been sent.',
-      otp: this.emailService.isConfigured() ? undefined : otp,
     };
   }
 
@@ -233,7 +239,10 @@ export class AuthService {
 
   async refreshTokens(dto: RefreshTokenDto) {
     try {
-      const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || 'astha_refresh_secret_key';
+      const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+      if (!secret) {
+        throw new UnauthorizedException('JWT secrets not configured');
+      }
       const payload = this.jwtService.verify(dto.refreshToken, { secret });
 
       const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
@@ -254,8 +263,12 @@ export class AuthService {
 
   private async generateTokens(userId: string, email: string, role: Role, name?: string) {
     const payload = { sub: userId, email, role, name };
-    const accessSecret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'astha_access_secret_key';
-    const refreshSecret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || 'astha_refresh_secret_key';
+    const accessSecret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET;
+    const refreshSecret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+    
+    if (!accessSecret || !refreshSecret) {
+      throw new UnauthorizedException('JWT secrets not configured');
+    }
 
     const accessToken = this.jwtService.sign(payload, {
       secret: accessSecret,

@@ -13,6 +13,11 @@ export class FormulasService {
       if (sanitized !== expression) {
         throw new BadRequestException('Formula contains invalid or unsafe characters');
       }
+      const dangerousKeywords = ['eval', 'require', 'import', 'function', 'console', 'window', 'process', 'global', 'constructor', 'prototype', '__proto__', 'this'];
+      const hasDangerousKeyword = dangerousKeywords.some(kw => new RegExp(`\\b${kw}\\b`).test(expression));
+      if (hasDangerousKeyword) {
+        throw new BadRequestException('Formula contains restricted keywords');
+      }
 
       const compiled = math.compile(sanitized);
       const result = compiled.evaluate(variables);
