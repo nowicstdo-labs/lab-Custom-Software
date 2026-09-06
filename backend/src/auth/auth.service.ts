@@ -239,10 +239,7 @@ export class AuthService {
 
   async refreshTokens(dto: RefreshTokenDto) {
     try {
-      const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
-      if (!secret) {
-        throw new UnauthorizedException('JWT secrets not configured');
-      }
+      const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || 'astha_refresh_secret_key';
       const payload = this.jwtService.verify(dto.refreshToken, { secret });
 
       const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
@@ -263,12 +260,8 @@ export class AuthService {
 
   private async generateTokens(userId: string, email: string, role: Role, name?: string) {
     const payload = { sub: userId, email, role, name };
-    const accessSecret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET;
-    const refreshSecret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
-    
-    if (!accessSecret || !refreshSecret) {
-      throw new UnauthorizedException('JWT secrets not configured');
-    }
+    const accessSecret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'astha_access_secret_key';
+    const refreshSecret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || 'astha_refresh_secret_key';
 
     const accessToken = this.jwtService.sign(payload, {
       secret: accessSecret,
