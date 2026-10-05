@@ -379,7 +379,6 @@ def convert_paths_endpoint(request):
 # ─── Blog ────────────────────────────────────────────────────────────────────
 
 @router.get("/blog/", auth=None)
-@cache_response('blog-list', timeout=180, namespace='blog')
 def list_blog_posts(request: HttpRequest):
     """Return all published blog posts."""
     posts = BlogPost.objects.filter(is_published=True).order_by('-created_at')
